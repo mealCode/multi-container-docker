@@ -1,0 +1,22 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t jeffox22/docker-complex -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=TRUE jeffox22/docker-complex npm run test -- --coverage
+
+after_success:
+  - docker build -t jeffox22/multi-client ./client
+  - docker build -t jeffox22/multi-nginx ./nginx
+  - docker build -t jeffox22/multi-server ./server
+  - docker build -t jeffox22/multi-worker ./worker
+  # 1. login to the docker cli
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # 2. take these images and push them to docker hub
+  - docker push jeffox22/multi-client
+  - docker push jeffox22/multi-nginx
+  - docker push jeffox22/multi-server
+  - docker push jeffox22/multi-worker
